@@ -101,3 +101,28 @@ void loop()
 
   delay(100); // Pequeno atraso para evitar leituras muito rápidas
 }
+
+
+
+
+
+
+
+
+
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(2, OUTPUT);
+  digitalWrite(2, 1);
+}
+
+void loop() {
+
+  int L1 = analogRead(A0);
+  Serial.print(L1);
+  Serial.print(" ; ");
+  int L8 = analogRead(A1);
+  Serial.println(L8);
+  delay(500);  
+}
