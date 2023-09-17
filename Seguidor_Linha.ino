@@ -1,13 +1,14 @@
 // Define os pinos para o controle do motor
-const int ligar_m1 = 3;
-const int ligar_m2 = 4;
+const int ligar_m1 = 10;
+const int ligar_m2 = 11;
 const int motorA1 = 5;
 const int motorA2 = 6;
 const int motorB1 = 7;
 const int motorB2 = 8;
 
-int sensorThreshold = 1000; // Valor do sensor para diminuir a velocidade
-int motorSpeed = 255; // Velocidade máxima inicial
+int motorSpeed = 82;
+int motorSpeed_Curve = 92;
+
 
 void setup()
 {
@@ -24,10 +25,10 @@ void setup()
   digitalWrite(2, 1);
 
     // Iniciar ambos os motores para a frente
-  digitalWrite(ligar_m1, HIGH);
+  analogWrite(ligar_m1, motorSpeed);
   digitalWrite(motorA1, HIGH);
   digitalWrite(motorA2, LOW);
-  digitalWrite(ligar_m2, HIGH);
+  analogWrite(ligar_m2, motorSpeed);
   digitalWrite(motorB1, HIGH);
   digitalWrite(motorB2, LOW);
 }
@@ -44,32 +45,38 @@ void loop()
   int L7 = analogRead(A6);
   int L8 = analogRead(A7);
 
-  if (L6 < 700) {
+  int limiar = 900;
+
+  if (L6 > limiar) {
     // Se o sensor detectar uma alteração
     // Pare o motor B e continue girando o motor A
-    digitalWrite(ligar_m2, LOW);
+    // digitalWrite(ligar_m2, LOW);
+    analogWrite(ligar_m1, motorSpeed_Curve);
     digitalWrite(motorB1, LOW);
     digitalWrite(motorB2, LOW);
   }
 
   else {
     // Sensor está acima do limite, então reinicie o motor B
-    digitalWrite(ligar_m2, HIGH);
+    // digitalWrite(ligar_m2, HIGH);
+    analogWrite(ligar_m1, motorSpeed);
     digitalWrite(motorB1, HIGH);
     digitalWrite(motorB2, LOW);
   }
 
-  if (L3 < 700) {
+  if (L3 > limiar) {
     // Se o sensor detectar uma alteração
     // Pare o motor A e continue girando o motor B
-    digitalWrite(ligar_m1, LOW);
+    // digitalWrite(ligar_m1, LOW);
+    analogWrite(ligar_m2, motorSpeed_Curve);
     digitalWrite(motorA1, LOW);
     digitalWrite(motorA2, LOW);
   }
 
   else {
     // Sensor está acima do limite, então reinicie o motor B
-    digitalWrite(ligar_m1, HIGH);
+    // digitalWrite(ligar_m1, HIGH);
+    analogWrite(ligar_m2, motorSpeed);
     digitalWrite(motorA1, HIGH);
     digitalWrite(motorA2, LOW);
   }
@@ -90,7 +97,5 @@ void loop()
   Serial.print(" ; ");
   Serial.println(L8);
   
-  delay(500);  
+  delay(10);  
 }
-
-
