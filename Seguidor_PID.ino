@@ -1,17 +1,25 @@
-#include <PID_v1.h>
-
 // Pinos dos motores
-const int ENA = 9;
-const int ENB = 10;
-const int in1 = 5;
-const int in2 = 6;
-const int in3 = 7;
-const int in4 = 8;
+const int ENA = 5;
+const int ENB = 6;
+const int in1 = 7;
+const int in2 = 8;
+const int in3 = 9;
+const int in4 = 10;
 
 // Parâmetros do PID
 double Setpoint, Input, Output;
-double Kp=0.007, Ki=0.00004, Kd=0.0000007;
-PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+double errSum = 0, lastErr = 0;
+double Kp=0.09, Ki=0.000008, Kd=0.000004;
+
+void Compute() {
+    double error = Setpoint - Input;
+    errSum += error;
+    double dErr = error - lastErr;
+
+    Output = Kp * error + Ki * errSum + Kd * dErr;
+
+    lastErr = error;
+}
 
 void setup()
 {
@@ -29,8 +37,20 @@ void setup()
     digitalWrite(2, 1);
 
     // Inicializa o PID
-    Setpoint = 90; // Defina seu valor de referência aqui
-    myPID.SetMode(AUTOMATIC);
+    Setpoint = 20; // Defina o valor de referência aqui
+
+    // Adiciona uma partida inicial para os motores
+    analogWrite(ENA, 75); // Velocidade inicial para o motor A
+    digitalWrite(in1,LOW);
+    digitalWrite(in2,HIGH);
+    analogWrite(ENB, 75); // Velocidade inicial para o motor B
+    digitalWrite(in3,HIGH);
+    digitalWrite(in4,LOW);
+
+    delay(2000); // Mantém a velocidade inicial por 2 segundos
+
+    analogWrite(ENA, 0); // Para o motor A
+    analogWrite(ENB, 0); // Para o motor B
 }
 
 void loop() {
@@ -40,24 +60,24 @@ void loop() {
     int L5 = analogRead(A4); //Sensor da esquerda
 
     Input = L5 - L4; // Diferença entre os sensores
-    myPID.Compute();
+    Compute();
 
-    // Ajusta o sinal de Output com base no sinal de Input
-    if (Input < 0 && Output > 0) {
-      Output = -Output;
-}
+//     // Ajusta o sinal de Output com base no sinal de Input
+//     if (Input < 0 && Output > 0) {
+//       Output = -Output;
+// }
 
-    // Agora você pode usar o valor de Output para controlar seus motores
-    int baseSpeed = 75; // Velocidade base dos motores
-    int maxChange = 75; // Máxima alteração permitida na velocidade dos motores
+    // Aqui e possivel usar o valor de Output para controlar seus motores
+    int baseSpeed = 85; // Velocidade base dos motores
+    int maxChange = 85; // Máxima alteração permitida na velocidade dos motores
 
     // Calcula a velocidade de cada motor
-    int motorSpeedA = constrain(baseSpeed + Output, 0, 150);
-    int motorSpeedB = constrain(baseSpeed - Output, 0, 150);
+    int motorSpeedA = constrain(baseSpeed - Output, 0, 170);
+    int motorSpeedB = constrain(baseSpeed + Output, 0, 170);
 
     // Certifica-se de que a velocidade não ultrapasse o máximo permitido
-    motorSpeedA = constrain(motorSpeedA, 0, 150);
-    motorSpeedB = constrain(motorSpeedB, 0, 150);
+    motorSpeedA = constrain(motorSpeedA, 0, 170);
+    motorSpeedB = constrain(motorSpeedB, 0, 170);
 
     Serial.print("Sensor da direita: ");
     Serial.print(L4);
@@ -72,26 +92,7 @@ void loop() {
     Serial.print(" Input :");
     Serial.println(Input);
 
-    // Define a velocidade dos motores
-    analogWrite(ENA, motorSpeedA);
-    analogWrite(ENB, motorSpeedB);
+   // Define a velocidade dos motores
+   analogWrite(ENA, motorSpeedA);
+   analogWrite(ENB, motorSpeedB);
 }
-
-
-  // //Ambos os motores girando para frente 
-  // digitalWrite(in1, LOW);
-  // digitalWrite(in2, HIGH);
-  // digitalWrite(ENA, 255);
-  // digitalWrite(in3, HIGH);
-  // digitalWrite(in4, LOW);
-  // digitalWrite(ENB, 255);
-
-
-
-
-
-
-
-
-
-
