@@ -42,13 +42,18 @@ void loop() {
     Input = L5 - L4; // Diferença entre os sensores
     myPID.Compute();
 
+    // Ajusta o sinal de Output com base no sinal de Input
+    if (Input < 0 && Output > 0) {
+      Output = -Output;
+}
+
     // Agora você pode usar o valor de Output para controlar seus motores
     int baseSpeed = 75; // Velocidade base dos motores
     int maxChange = 75; // Máxima alteração permitida na velocidade dos motores
 
     // Calcula a velocidade de cada motor
-    int motorSpeedA = baseSpeed + constrain(Output, -maxChange, maxChange);
-    int motorSpeedB = baseSpeed - constrain(Output, -maxChange, maxChange);
+    int motorSpeedA = constrain(baseSpeed + Output, 0, 150);
+    int motorSpeedB = constrain(baseSpeed - Output, 0, 150);
 
     // Certifica-se de que a velocidade não ultrapasse o máximo permitido
     motorSpeedA = constrain(motorSpeedA, 0, 150);
