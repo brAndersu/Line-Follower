@@ -9,7 +9,7 @@ const int in4 = 10;
 // Parâmetros do PID
 double Setpoint, Input, Output;
 double errSum = 0, lastErr = 0;
-double Kp=0.09, Ki=0.000008, Kd=0.000004;
+double Kp=0.3, Ki=0.000008, Kd=0.000008;
 
 void Compute() {
     double error = Setpoint - Input;
@@ -37,13 +37,13 @@ void setup()
     digitalWrite(2, 1);
 
     // Inicializa o PID
-    Setpoint = 20; // Defina o valor de referência aqui
+    Setpoint = 5; // Defina o valor de referência aqui
 
     // Adiciona uma partida inicial para os motores
-    analogWrite(ENA, 75); // Velocidade inicial para o motor A
+    analogWrite(ENA, 110); // Velocidade inicial para o motor A
     digitalWrite(in1,LOW);
     digitalWrite(in2,HIGH);
-    analogWrite(ENB, 75); // Velocidade inicial para o motor B
+    analogWrite(ENB, 110); // Velocidade inicial para o motor B
     digitalWrite(in3,HIGH);
     digitalWrite(in4,LOW);
 
@@ -68,16 +68,16 @@ void loop() {
 // }
 
     // Aqui e possivel usar o valor de Output para controlar seus motores
-    int baseSpeed = 85; // Velocidade base dos motores
-    int maxChange = 85; // Máxima alteração permitida na velocidade dos motores
+    int baseSpeed = 125; // Velocidade base dos motores
+    int maxChange = 125; // Máxima alteração permitida na velocidade dos motores
 
     // Calcula a velocidade de cada motor
-    int motorSpeedA = constrain(baseSpeed - Output, 0, 170);
-    int motorSpeedB = constrain(baseSpeed + Output, 0, 170);
+    int motorSpeedA = constrain(baseSpeed - Output, 0, 250);
+    int motorSpeedB = constrain(baseSpeed + Output, 0, 250);
 
     // Certifica-se de que a velocidade não ultrapasse o máximo permitido
-    motorSpeedA = constrain(motorSpeedA, 0, 170);
-    motorSpeedB = constrain(motorSpeedB, 0, 170);
+    motorSpeedA = constrain(motorSpeedA, 0, 125);
+    motorSpeedB = constrain(motorSpeedB, 0, 125);
 
     Serial.print("Sensor da direita: ");
     Serial.print(L4);
