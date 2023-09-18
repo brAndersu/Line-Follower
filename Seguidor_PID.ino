@@ -47,10 +47,10 @@ void setup()
     digitalWrite(in3,HIGH);
     digitalWrite(in4,LOW);
 
-    delay(2000); // Mantém a velocidade inicial por 2 segundos
+    // delay(2000); // Mantém a velocidade inicial por 2 segundos
 
-    analogWrite(ENA, 0); // Para o motor A
-    analogWrite(ENB, 0); // Para o motor B
+    // analogWrite(ENA, 0); // Para o motor A
+    // analogWrite(ENB, 0); // Para o motor B
 }
 
 void loop() {
@@ -83,7 +83,7 @@ void loop() {
     Serial.print(L4);
     Serial.print(" Sensor da esquerda: ");
     Serial.print(L5);
-    Serial.print("Velocidade A: ");
+    Serial.print(" Velocidade A: ");
     Serial.print(motorSpeedA);
     Serial.print(" Velocidade B: ");
     Serial.print(motorSpeedB);
