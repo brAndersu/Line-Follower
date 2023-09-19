@@ -2,17 +2,14 @@
 #define CALIBRATION_TIME 5000 // Tempo de calibração em milissegundos
 
 int sensorPins[NUM_SENSORS] = {A0, A1, A2, A3, A4, A5, A6, A7}; // Pinagem dos sensores
-int sensorWeights[NUM_SENSORS] = {-4, -3, -2, -1, 1, 2, 3, 4}; // Pesos dos sensores
+int sensorWeights[NUM_SENSORS] = {-40, -30, -20, -10, 10, 20, 30, 40}; // Pesos dos sensores
 int minValues[NUM_SENSORS]; // Vetor para armazenar os valores mínimos
 int maxValues[NUM_SENSORS]; // Vetor para armazenar os valores máximos
 
-double kp = 1.0; // Constante proporcional
-double ki = 0.0; // Constante integral
-double kd = 0.0; // Constante derivativa
-
-double error = 0.0; // Erro atual
-double lastError = 0.0; // Erro anterior
-double integral = 0.0; // Integral do erro
+// Parâmetros do PID
+double Setpoint, Input, Output;
+double errSum = 0, lastErr = 0;
+double Kp=0.4, Ki=0, Kd=0;
 
 void setup() {
   Serial.begin(9600);
@@ -24,30 +21,27 @@ void setup() {
     pinMode(sensorPins[i], INPUT);
   }
 
+  // Inicializa o PID
+  Setpoint = 5; // Defina o valor de referência aqui
+
   // Inicia a calibração
   calibrateSensors();
 }
 
 void loop() {
   double position = readLinePosition(); // Lê a posição atual na linha
+  Serial.print(" Input: ");
+  Serial.print(position);
 
-  // Calcula o erro
-  error = position;
+  Input = position;
 
-  // Calcula a integral do erro
-  integral += error;
+  Compute(); // Calcula a saída do PID
 
-  // Calcula a derivada do erro
-  double derivative = error - lastError;
-
-  // Calcula a saída do PID
-  double output = kp * error + ki * integral + kd * derivative;
-
-  // Atualiza o erro anterior
-  lastError = error;
+  Serial.print(" output: ");
+  Serial.println(Output);
 
   // Usa a saída do PID para controlar o carro
-  controlCar(output);
+  controlCar(Output);
 }
 
 void calibrateSensors() {
@@ -57,25 +51,48 @@ void calibrateSensors() {
       int value = analogRead(sensorPins[i]);
       minValues[i] = min(minValues[i], value);
       maxValues[i] = max(maxValues[i], value);
+      Serial.print("Valor Maximo: ");
+      Serial.print(maxValues[i]);
+      Serial.print("Valor Minimo: ");
+      Serial.println(minValues[i]);
     }
   }
 }
 
 double readLinePosition() {
-  int sum = 0;
-  int total = 0;
+  double somaPonderada = 0;
+  double soma = 0;
   
   for (int i = 0; i < NUM_SENSORS; i++) {
     int value = analogRead(sensorPins[i]);
-    int normalizedValue = (value - minValues[i]) / (double)(maxValues[i] - minValues[i]);
+
+    somaPonderada += (value*sensorWeights[i]);
+    soma += value;
     
-    sum += normalizedValue * sensorWeights[i];
-    total += normalizedValue;
+
+    Serial.print(value);
+    Serial.print(" ; ");
   }
   
-  return total == 0 ? 0 : (double)sum / total;
+  double posicao = (soma != 0) ? somaPonderada/soma : 0; // Evita divisão por zero
+  
+  Serial.print("Posicao: ");
+  Serial.print(posicao);
+  
+  return posicao; // Retorna a posição calculada
+}
+
+
+void Compute() {
+  double error = Setpoint - Input;
+  errSum += error;
+  double dErr = error - lastErr;
+
+  Output = Kp * error + Ki * errSum + Kd * dErr;
+
+  lastErr = error;
 }
 
 void controlCar(double output) {
-   // Implemente esta função para controlar seu carro com base na saída do PID.
+   // função para controlar o carro com base na saída do PID.
 }
