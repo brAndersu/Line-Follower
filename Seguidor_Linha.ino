@@ -1,103 +1,136 @@
-// Define os pinos para o controle do motor
-const int ligar_m1 = 10;
-const int ligar_m2 = 11;
-const int motorA1 = 5;
-const int motorA2 = 6;
-const int motorB1 = 7;
-const int motorB2 = 8;
+#define NUM_SENSORS 8 // Número de sensores
+#define CALIBRATION_TIME 5000 // Tempo de calibração em milissegundos
 
-int motorSpeed = 82;
-int motorSpeed_Curve = 92;
+int sensorPins[NUM_SENSORS] = {A0, A1, A2, A3, A4, A5, A6, A7}; // Pinagem dos sensores
+int sensorWeights[NUM_SENSORS] = {-40, -30, -20, -10, 10, 20, 30, 40}; // Pesos dos sensores
+int minValues[NUM_SENSORS]; // Vetor para armazenar os valores mínimos
+int maxValues[NUM_SENSORS]; // Vetor para armazenar os valores máximos
 
+const int motorEsquerdo = 5;
+const int motorDireito = 6;
+const int IN1 = 7;
+const int IN2 = 8;
+const int IN3 = 9;
+const int IN4 = 10;
 
-void setup()
-{
-    // Define os pinos como saídas
-  pinMode(ligar_m1, OUTPUT);
-  pinMode(ligar_m2, OUTPUT);
-  pinMode(motorA1, OUTPUT);
-  pinMode(motorA2, OUTPUT);
-  pinMode(motorB1, OUTPUT);
-  pinMode(motorB2, OUTPUT);
+// Parâmetros do PID
+double Setpoint, Input, Output;
+double errSum = 0, lastErr = 0;
+double Kp=4.5, Ki=0, Kd=0;
 
+void setup() {
   Serial.begin(9600);
-  pinMode(2, OUTPUT);
-  digitalWrite(2, 1);
-
-    // Iniciar ambos os motores para a frente
-  analogWrite(ligar_m1, motorSpeed);
-  digitalWrite(motorA1, HIGH);
-  digitalWrite(motorA2, LOW);
-  analogWrite(ligar_m2, motorSpeed);
-  digitalWrite(motorB1, HIGH);
-  digitalWrite(motorB2, LOW);
-}
-
-void loop()
-{
-  // Defini os pinos para cada um dos sensores
-  int L1 = analogRead(A0);
-  int L2 = analogRead(A1);
-  int L3 = analogRead(A2);
-  int L4 = analogRead(A3);
-  int L5 = analogRead(A4);
-  int L6 = analogRead(A5);
-  int L7 = analogRead(A6);
-  int L8 = analogRead(A7);
-
-  int limiar = 900;
-
-  if (L6 > limiar) {
-    // Se o sensor detectar uma alteração
-    // Pare o motor B e continue girando o motor A
-    // digitalWrite(ligar_m2, LOW);
-    analogWrite(ligar_m1, motorSpeed_Curve);
-    digitalWrite(motorB1, LOW);
-    digitalWrite(motorB2, LOW);
-  }
-
-  else {
-    // Sensor está acima do limite, então reinicie o motor B
-    // digitalWrite(ligar_m2, HIGH);
-    analogWrite(ligar_m1, motorSpeed);
-    digitalWrite(motorB1, HIGH);
-    digitalWrite(motorB2, LOW);
-  }
-
-  if (L3 > limiar) {
-    // Se o sensor detectar uma alteração
-    // Pare o motor A e continue girando o motor B
-    // digitalWrite(ligar_m1, LOW);
-    analogWrite(ligar_m2, motorSpeed_Curve);
-    digitalWrite(motorA1, LOW);
-    digitalWrite(motorA2, LOW);
-  }
-
-  else {
-    // Sensor está acima do limite, então reinicie o motor B
-    // digitalWrite(ligar_m1, HIGH);
-    analogWrite(ligar_m2, motorSpeed);
-    digitalWrite(motorA1, HIGH);
-    digitalWrite(motorA2, LOW);
-  }
-
-  Serial.print(L1);
-  Serial.print(" ; ");
-  Serial.print(L2);
-  Serial.print(" ; ");
-  Serial.print(L3);
-  Serial.print(" ; ");
-  Serial.print(L4);
-  Serial.print(" ; ");
-  Serial.print(L5);
-  Serial.print(" ; ");
-  Serial.print(L6);
-  Serial.print(" ; ");
-  Serial.print(L7);
-  Serial.print(" ; ");
-  Serial.println(L8);
   
-  delay(10);  
+  // Inicializa os vetores minValues e maxValues
+  for (int i = 0; i < NUM_SENSORS; i++) {
+    minValues[i] = 1023;
+    maxValues[i] = 0;
+    pinMode(sensorPins[i], INPUT);
+  }
+
+  // Inicializa o PID
+  Setpoint = 0; // Defina o valor de referência aqui
+  pinMode(13, LOW);
+  delay(3000);
+  pinMode(13, HIGH);
+  delay(2000);
+  // Inicia a calibração
+  calibrateSensors();
+  pinMode(13, LOW);
+  delay(2000);
+
 }
 
-//teste
+void loop() {
+  double position = readLinePosition(); // Lê a posição atual na linha
+  Serial.print(" Input: ");
+  Serial.print(position);
+
+  Input = position;
+
+  Compute(); // Calcula a saída do PID
+
+  Serial.print(" output: ");
+  Serial.println(Output);
+
+  // Usa a saída do PID para controlar o carro
+  controlCar(Output);
+}
+
+void calibrateSensors() {
+  unsigned long startTime = millis();
+  while (millis() - startTime < CALIBRATION_TIME) {
+    for (int i = 0; i < NUM_SENSORS; i++) {
+      int value = analogRead(sensorPins[i]);
+      minValues[i] = min(minValues[i], value);
+      maxValues[i] = max(maxValues[i], value);
+      Serial.print("Valor Maximo: ");
+      Serial.print(maxValues[i]);
+      Serial.print("Valor Minimo: ");
+      Serial.println(minValues[i]);
+    }
+  }
+}
+
+double readLinePosition() {
+  double somaPonderada = 0;
+  double soma = 0;
+  
+  for (int i = 0; i < NUM_SENSORS; i++) {
+    int value = analogRead(sensorPins[i]);
+
+    somaPonderada += (value*sensorWeights[i]);
+    soma += value;
+    
+
+    Serial.print(value);
+    Serial.print(" ; ");
+  }
+  
+  double posicao = (soma != 0) ? somaPonderada/soma : 0; // Evita divisão por zero
+  
+  Serial.print("Posicao: ");
+  Serial.print(posicao);
+  
+  return posicao; // Retorna a posição calculada
+}
+
+
+void Compute() {
+  double error = Setpoint - Input;
+  errSum += error;
+  double dErr = error - lastErr;
+
+  Output = Kp * error + Ki * errSum + Kd * dErr;
+
+  lastErr = error;
+}
+
+void controlCar(double output) {
+  int speed = 65; // Velocidade base
+  int leftSpeed = speed + abs(output);
+  int rightSpeed = speed + abs(output);
+
+  if (output > 0) {
+    rightSpeed -= 2*abs(output);
+  } else {
+    leftSpeed -= 2*abs(output);
+  }
+
+  // Garante que a velocidade esteja entre 0 e 140
+  leftSpeed = constrain(leftSpeed, 0, 255);
+  rightSpeed = constrain(rightSpeed, 0, 255);
+
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(motorEsquerdo, leftSpeed);
+  analogWrite(motorDireito, rightSpeed);
+
+  Serial.print("Motor Esquerdo: ");
+  Serial.print(leftSpeed);
+  Serial.print("Motor Direito: ");
+  Serial.print(rightSpeed);
+  Serial.print(" ");
+}
