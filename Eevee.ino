@@ -27,6 +27,9 @@ int linha[8];
 // Variáveis para calcular a posição do robô em relação à linha
 long int somaPonderada, soma, posicao, posicaoLinha, ultimaPosicao;
 
+// float KP = 0.1;
+// float KD = 0.11333;
+
 // Variáveis PID
 float KP = 0.2;
 float KD = 2;
